@@ -340,5 +340,12 @@ More in [docs/PLAN.md](docs/PLAN.md), [docs/METAL.md](docs/METAL.md) and
 
 ## Credits and license
 
-Based on the scimitar-recomp project. GNU General Public License, version 2 or later
-([LICENSE](LICENSE)). The game is not covered: it remains Ubisoft's, and you need your own copy.
+Based on the [scimitar-recomp](https://github.com/T01iK/scimitar-recomp) project. Licensed under the GNU General Public License, version 2 or later ([LICENSE](LICENSE)).
+
+## Disclaimer
+
+This project is an independent, non-commercial static recompilation and iOS compatibility wrapper created strictly for **educational, research, and software preservation purposes**. 
+
+* **No Copyrighted Assets Included:** This repository contains no copyrighted game data, executables, audio, textures, or proprietary assets. Users must legally own and supply their own original copy of the game to extract any required files locally.
+* **Trademarks & Rights Holders:** *Assassin's Creed* and all related marks, logos, and game assets are the sole property of **Ubisoft Entertainment**. This project is not affiliated with, endorsed by, or sponsored by Ubisoft.
+* **Takedown / Rights Holder Notice:** If you are a rights holder or authorized representative and have concerns regarding intellectual property or trademark usage in this repository, please open an issue or contact the maintainer directly. Upon verification, any disputed material—or the repository itself—will be promptly removed without objection.
