@@ -95,8 +95,8 @@ Turn it on in **Settings**, then **Display**, then **Remove color filter**
 
 Playable: the intro videos, the menus, the story from the start, and saves. Not played end to
 end. Online features (Uplay rewards, Ubisoft accounts) depended on services that no longer
-exist, so the game starts and saves offline. Tested on an **iPhone 15 Pro**; other recent iPhones and
-iPads should work but have not been tried.
+exist, so the game starts and saves offline. Tested on an **iPhone 15 Pro**.
+other recent iPhones should work but have not been tested.
 
 > [!IMPORTANT]
 > This port will perform better with the increased memory limit entitlement. More information on how to set it up can be found here: [iRAM Repository](https://github.com/NexSideloading/iRAM-Plus)
