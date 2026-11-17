@@ -10,7 +10,7 @@
   <img src="icon/icon.png" width="300">
 </p>
 
-*Assassin's Creed II* running natively on iPhone and iPad. The game's Mac executable is
+*Assassin's Creed II* running natively on iPhone. The game's Mac executable is
 translated, function by function, into arm64 C++ and compiled into an iOS app with a Metal
 renderer, a UIKit shell, on-screen touch controls and a launcher. Nothing is emulated.
 
