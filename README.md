@@ -76,7 +76,7 @@ Turn it on in **Settings**, then **Display**, then **Remove color filter**
     </td>
     <td align="center">
       <img src="screenshots/IMG_9557.png" width="400" alt="Example 1 with the color filter off"><br>
-      <sub><b>Filter off</b> (Remove color filter)</sub>
+      <sub><b>Filter off</b> (Mod)</sub>
     </td>
   </tr>
   <tr>
@@ -86,7 +86,7 @@ Turn it on in **Settings**, then **Display**, then **Remove color filter**
     </td>
     <td align="center">
       <img src="screenshots/IMG_9555.png" width="400" alt="Example 2 with the color filter off"><br>
-      <sub><b>Filter off</b> (Remove color filter)</sub>
+      <sub><b>Filter off</b> (Mod)</sub>
     </td>
   </tr>
 </table>
