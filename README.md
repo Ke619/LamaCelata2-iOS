@@ -64,7 +64,7 @@ flowchart LR
 
 *Assassin's Creed II* puts a color filter over the picture in every world. This port can switch
 it off, the same effect as the PC mod *AC2's True Colors*, without changing the game's files.
-Turn it on in **Settings**, then **Display**, then **Remove color filter**
+Turn it on in **Settings**>**Display**>**Remove color filter**
 ([how it works](docs/AC2_COLOR_FILTER.md)).
 
 <!-- Add your four pictures to docs/images/ with these names (or change the paths below). -->
