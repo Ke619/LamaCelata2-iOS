@@ -14,11 +14,10 @@
 translated, function by function, into arm64 C++ and compiled into an iOS app with a Metal
 renderer, a UIKit shell, on-screen touch controls and a launcher. Nothing is emulated.
 
-**You do not need a Mac.** Two GitHub Actions workflows do the translating and the building
-in the cloud, and you only sideload the finished app.
+**You do not need a Mac.** You can download the pre-built IPA directly from **Releases** (or build it yourself in the cloud using GitHub Actions), sideload it onto your iPhone or iPad, and copy your own game files over.
 
 >[!important]
-> This project is not affiliated with, endorsed by or connected to Ubisoft.
+> This project is not affiliated with, endorsed by or connected to Ubisoft Entertainment.
 > *Assassin's Creed* is a trademark of Ubisoft Entertainment.
 >
 > **Keep your copy of this repository private.** The translated code in `generated/` is derived from Ubisoft's executable. No game files are in the source tree, and you
@@ -101,7 +100,36 @@ other recent iPhones should work but have not been tested.
 > [!IMPORTANT]
 > This port will perform better with the increased memory limit entitlement. More information on how to set it up can be found here: [iRAM Repository](https://github.com/NexSideloading/iRAM-Plus)
 
-## Quick start: build it with GitHub Actions
+## Quick start: install from GitHub Releases (easiest)
+
+**You need:** an iPhone or iPad on iOS 17 or later with about 9 GB free, your own copy of the game, and a sideloading tool that re-signs apps with your Apple ID (such as Sideloadly, AltStore, or SideStore).
+
+### 1. Download the pre-built IPA
+1. Open the [**Releases**](../../releases) page on the right side of this repository.
+2. Under the latest release, download **`ac2-unsigned.ipa`**.
+
+### 2. Sideload the app
+Open `ac2-unsigned.ipa` with your sideloading tool and install it onto your iPhone or iPad using your Apple ID.
+- Note: An app signed with a free Apple ID expires after **7 days** and must be re-signed/refreshed periodically.
+- For smoother performance, consider enabling the increased memory limit entitlement ([iRAM Repository](https://github.com/NexSideloading/iRAM-Plus)).
+
+### 3. Get the game files
+The port requires the Mac **1.0.1** release of *Assassin's Creed II* (standard Steam installs download 1.0.0, which will not work). With the game owned on Steam, open the Steam console (`steam://open/console` in a browser) and run:
+
+```
+download_depot 33230 33362 5654928643791563232
+```
+
+Steam will download the 1.0.1 build (~7.5 GB) and print the local folder path containing **`Assassin's Creed 2.app`**.
+
+### 4. Copy the game into the app
+Copy the entire **`Assassin's Creed 2.app`** bundle (~8.7 GB) into the app's storage folder on your device:
+- **On your iPhone/iPad:** Open the **Files** app → **On My iPhone** (or **On My iPad**) → open the **Assassin's Creed II** app folder and paste `Assassin's Creed 2.app` inside.
+- **From a computer:** Connect your device, open Finder (Mac) or iTunes/Apple Devices (Windows), go to the device's **Files** tab, and drag `Assassin's Creed 2.app` into the app's folder.
+
+Once copied, open the app—the launcher status will change from **INSTALL** to **Found**, and you can tap **PLAY**.
+
+## Building from source with GitHub Actions (optional)
 
 **You need:** a GitHub account, an iPhone or iPad on iOS 17 or later with about 9 GB free, your
 own copy of the game, and a sideloading tool that re-signs apps with your Apple ID (for example
