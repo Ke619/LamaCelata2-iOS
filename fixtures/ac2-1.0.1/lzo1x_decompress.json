@@ -1,0 +1,52 @@
+{
+  "symbol": "_lzo1x_decompress",
+  "vmaddr": "0x0015dc70",
+  "size": 912,
+  "section": "__TEXT,__text",
+  "code_sha256": "0866df17f66b083e2fcc4688574d1b56e7bafd182cd5044a8cfaa196987a4f1b",
+  "source_binary": {
+    "name": "scimitar_sf",
+    "sha1": "afcbbbf8046c47561b2a5a0574a11703071f15e5"
+  },
+  "analysis": {
+    "instructions": 300,
+    "mnemonics": [
+      "addl",
+      "andl",
+      "cmpb",
+      "cmpl",
+      "decl",
+      "incl",
+      "ja",
+      "jbe",
+      "je",
+      "jle",
+      "jmp",
+      "jne",
+      "leal",
+      "leave",
+      "movb",
+      "movl",
+      "movzbl",
+      "movzwl",
+      "nop",
+      "nopl",
+      "nopw",
+      "popl",
+      "pushl",
+      "retl",
+      "sbbl",
+      "shll",
+      "shrl",
+      "shrw",
+      "subl",
+      "testb",
+      "testl",
+      "xorl"
+    ],
+    "calls": [],
+    "indirect_branches": [],
+    "jumps_leaving_function": [],
+    "absolute_memory_refs": []
+  }
+}

@@ -1,0 +1,62 @@
+name: translate
+# ONE-OFF, only if you have no Mac/Linux to run the translator on. Makes generated/ for ios-port.yml.
+# 1. In this PRIVATE repo: Releases -> new release, tag "game-bin", attach scimitar_sf (AC2 Mac 1.0.1's
+#    Contents/MacOS/scimitar_sf, nothing else). Publish it as a PRE-RELEASE (a draft has no tag yet, so the workflow couldn't find it); the repo is private, so only you see it.
+# 2. Run this workflow, download the "generated" artifact, unpack it into generated/ and commit.
+# 3. Delete the "game-bin" release (and its tag).
+# Run it again only when recomp/, runtime/ or games/ change: the translation is built from them.
+env:
+  SCIMITAR_SF_SHA1: afcbbbf8046c47561b2a5a0574a11703071f15e5
+on:
+  workflow_dispatch:
+
+jobs:
+  translate:
+    runs-on: macos-15
+    timeout-minutes: 330
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: brew install cmake ninja zydis
+
+      - name: Fetch the executable from this repo's own release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/game/Assassin's Creed 2.app"
+          mkdir -p "$APP/Contents/MacOS"
+          gh release download game-bin --pattern scimitar_sf --dir "$APP/Contents/MacOS"
+          echo "$SCIMITAR_SF_SHA1  $APP/Contents/MacOS/scimitar_sf" | shasum -a 1 -c -
+          chmod +x "$APP/Contents/MacOS/scimitar_sf"
+          echo "AC2_APP=$APP" >> "$GITHUB_ENV"
+
+      - name: Translate AC2 (x86 -> C++)
+        run: |
+          set -o pipefail
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DSCIMITAR_FULL_IMAGE=ON -DSCIMITAR_GAMES=ac2 \
+            -DAC2_APP="$AC2_APP" 2>&1 | tee translate.log
+          # Only the translator's output. (Unverified shortcut: if Ninja rejects this target, use
+          # `cmake --build build --target ac2_full`, which also compiles the parts for macOS.)
+          ninja -C build gen/full/ac2_0.cpp 2>&1 | tee -a translate.log
+          ls build/gen/full | head
+          du -sh build/gen/full
+          ls -l build/gen/full | awk '{print $5, $9}' | sort -n | tail -3   # biggest file: must stay under 100 MB
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated
+          path: build/gen/full
+          if-no-files-found: error
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: translate-log
+          path: translate.log
+          retention-days: 3

@@ -1,0 +1,3 @@
+# Binary test data: no diffs, no line-ending changes.
+tests/lzo/vectors/** binary
+fixtures/**/*.bin binary

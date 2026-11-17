@@ -1,0 +1,179 @@
+name: ios-port
+env:
+  # >>> THE APP'S VERSION - change it here. It becomes the app's version number (Info.plist).
+  APP_VERSION: "1.0"
+  # (the build cache)
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 2G
+  CCACHE_SLOPPINESS: pch_defines,time_macros,include_file_mtime,include_file_ctime
+# Builds scimitar-recomp's AC2 port for iOS arm64 from the translated code kept in generated/ (the
+# translator's output, see translate.yml). Lives in a PRIVATE repo: generated/ and the IPA are derived
+# from Ubisoft's executable. The game itself is copied to the phone afterwards.
+on:
+  workflow_dispatch:
+    inputs:
+      gen_opt:
+        description: "Optimization of the translated game code (-O1 builds faster, -O2 runs faster)"
+        required: false
+        default: "-O1"
+
+jobs:
+  port:
+    runs-on: macos-15
+    timeout-minutes: 330
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the generated code is here (and no game file)
+        run: |
+          n=$(ls generated/ac2_*.cpp 2>/dev/null | wc -l | tr -d ' ')
+          echo "translated parts in generated/: $n (expected 64)"
+          test "$n" -eq 64
+          echo "files in generated: $(find generated -type f | wc -l)"
+          if find . -path ./.git -prune -o \( -name "scimitar_sf" -o -name "*.forge" -o -name "*.bik" -o -name "*.app" \) -print | grep -q .; then
+            echo "ERROR: a game file is in this repo"; exit 1
+          fi
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: ccache-ac2-${{ github.run_id }}
+          restore-keys: ccache-ac2-
+
+      - name: Tools
+        run: |
+          brew install cmake ninja ccache || true
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          sysctl -n hw.ncpu hw.memsize
+          df -h /
+
+      - name: Cache FFmpeg for iOS (Bink videos)
+        id: ffmpeg-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/scimitar
+          key: ffmpeg-ios-${{ hashFiles('tools/build_ffmpeg_ios.sh') }}
+
+      - name: Build FFmpeg for iOS
+        if: ${{ steps.ffmpeg-cache.outputs.cache-hit != 'true' }}
+        run: tools/build_ffmpeg_ios.sh iphoneos
+
+      # The app icon. Either your own picture: put a square PNG (1024x1024 is best) at icon/icon.png in
+      # this repo; or the game's own AC2.icns (game art, so keep it out of the repo), from the secret
+      # AC2_ICON_URL (a direct link to AC2.icns, from Assassin's Creed 2.app/Contents/Resources/).
+      # With neither, the app has no icon.
+      - name: App icon
+        env:
+          AC2_ICON_URL: ${{ secrets.AC2_ICON_URL }}
+        run: |
+          set -euo pipefail
+          if [ -f icon/icon.png ]; then
+            echo "AC2_ICON_PATH=$PWD/icon/icon.png" >> "$GITHUB_ENV"
+            echo "icon: icon/icon.png"
+          elif [ -n "${AC2_ICON_URL:-}" ]; then
+            curl -fL --retry 3 "$AC2_ICON_URL" -o "$RUNNER_TEMP/AC2.icns"
+            echo "AC2_ICON_PATH=$RUNNER_TEMP/AC2.icns" >> "$GITHUB_ENV"
+            echo "icon: AC2.icns from the secret"
+          else
+            echo "::warning::no icon (add icon/icon.png or the AC2_ICON_URL secret)"
+          fi
+
+      - name: Configure the port (iOS arm64)
+        run: |
+          set -o pipefail
+          cmake -S . -B build-ios -G Ninja \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphoneos \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=17.0 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DSCIMITAR_GEN_OPT="${{ inputs.gen_opt || '-O1' }}" \
+            -DSCIMITAR_GEN_DIR="$PWD/generated" \
+            ${AC2_ICON_PATH:+-DAC2_ICON_SOURCE=$AC2_ICON_PATH} \
+            2>&1 | tee configure.log
+          # (signing identity stays "-": ad hoc, as the sideload tools re-sign it)
+
+      - name: Build ac2 (keeps going to show every error, then fails if there were any)
+        run: |
+          set -o pipefail
+          cmake --build build-ios --target ac2 -- -j3 -k 0 2>&1 | tee build.log
+
+      - name: Inspect the binary (platform, size, dependencies)
+        run: |
+          set -euo pipefail
+          exec > >(tee -a package.log) 2>&1
+          B=build-ios/ac2.app/ac2
+          ls -l "$B"
+          file "$B"
+          otool -l "$B" | grep -A5 LC_BUILD_VERSION
+          echo "---- dependencies ----"
+          otool -L "$B"
+          echo "---- icon ----"
+          plutil -p build-ios/ac2.app/Info.plist | grep -i icon || echo "NO ICON KEYS in Info.plist"
+          ls build-ios/ac2.app | grep -E "Assets.car|AppIcon" || echo "NO ICON FILES in the app"
+          echo "---- app contents ----"
+          ls -l build-ios/ac2.app
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          exec > >(tee -a package.log) 2>&1
+          rm -rf ipa ac2-unsigned.ipa
+          mkdir -p ipa/Payload
+          cp -R build-ios/ac2.app ipa/Payload/
+          APP="ipa/Payload/ac2.app"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $APP_VERSION" "$APP/Info.plist"
+          plutil -lint "$APP/Info.plist"
+          if otool -L "$APP/ac2" | grep "/Users/"; then
+            echo "ERROR: build-machine paths left in the binary"; exit 1
+          fi
+          # ad-hoc signature (sideload tools replace it); again, as the Info.plist changed
+          codesign --force --sign - "$APP"
+          (cd ipa && zip -qry ../ac2-unsigned.ipa Payload)
+          ls -l ac2-unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ac2-unsigned-ipa
+          path: ac2-unsigned.ipa
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
+
+      - name: Cache stats
+        if: always()
+        run: ccache -s || true
+
+      - name: Error summary
+        if: always()
+        run: |
+          {
+            echo "### port on iOS"
+            echo '```'
+            grep -hE "error:|CMake Error|FAILED:|fatal error|Undefined symbols|ld: " configure.log build.log 2>/dev/null | sed -E 's#/Users/runner/work/[^/]+/[^/]+/##' | sort -u | head -80 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: port-logs
+          path: |
+            configure.log
+            build.log
+            package.log
+          retention-days: 3
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .ccache
+          key: ccache-ac2-${{ github.run_id }}
